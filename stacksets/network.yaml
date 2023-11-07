@@ -127,6 +127,29 @@ Resources:
       RouteTableId: !Ref PrivateRouteTable
 
 Outputs:
+  VPC:
+    Description: "A reference to the created VPC"
+    Value: !Ref VPC
+    Export:
+      Name: !Sub ${AWS::StackName}-VPC
   VpcId:
     Description: The VPC ID
     Value: !Ref VPC
+  PublicSubnets:
+    Description: "A list of public subnets"
+    Value: !Join [",", [ !Ref PublicSubnetA, !Ref PublicSubnetB ]]
+  PrivateSubnets:
+    Description: "A list of private subnets"
+    Value: !Join [",", [ !Ref PrivateSubnetA, !Ref PrivateSubnetB ]]
+  PublicSubnetA:
+    Description: "A reference to public subnet in the 1st availability zone"
+    Value: !Ref PublicSubnetA
+  PublicSubnetB:
+    Description: "A reference to public subnet in the 2nd availability zone"
+    Value: !Ref PublicSubnetB
+  PrivateSubnetA:
+    Description: "A reference to private subnet in the 1st availability zone"
+    Value: !Ref PrivateSubnetA
+  PrivateSubnetB:
+    Description: "A reference to private subnet in the 2nd availability zone"
+    Value: !Ref PrivateSubnetB

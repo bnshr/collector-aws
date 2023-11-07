@@ -1,0 +1,9 @@
+# Refer network stack
+
+# Depends on RDS Stack to get database username and password for injection
+# Maybe we don't need it if we think they are stored somewhere and connects to vault to obtain it
+
+# Launch EC2 instance in public subnet
+
+
+# Export the web server url (no https)
