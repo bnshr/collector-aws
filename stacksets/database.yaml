@@ -1,1 +1,111 @@
 # Refer network stack to get private subnets and vpc name where the RDS instance would be created
+Parameters:
+  NetworkStackName:
+    Type: "String"
+    Default: network
+  DBInstanceClass:
+    Description: The database instance type
+    Type: String
+    Default: db.t3.micro
+    AllowedValues: [db.t3.micro, db.t1.micro, db.m1.small, db.m1.medium, db.m1.large, db.m1.xlarge,
+      db.m2.xlarge, db.m2.2xlarge, db.m2.4xlarge, db.m3.medium, db.m3.large, db.m3.xlarge,
+      db.m3.2xlarge, db.m4.large, db.m4.xlarge, db.m4.2xlarge, db.m4.4xlarge, db.m4.10xlarge,
+      db.r3.large, db.r3.xlarge, db.r3.2xlarge, db.r3.4xlarge, db.r3.8xlarge, db.m2.xlarge,
+      db.m2.2xlarge, db.m2.4xlarge, db.cr1.8xlarge, db.t2.micro, db.t2.small, db.t2.medium,
+      db.t2.large]
+    ConstraintDescription: must select a valid database instance type.
+  DBUsername:
+    Type: "String"
+    Default: admin
+  DBPassword:
+    Type: "String"
+    Default: adm1n12345678
+  DBAllocatedStorage:
+    Default: '5'
+    Description: The size of the database (Gb)
+    Type: Number
+    MinValue: '5'
+    MaxValue: '1024'
+    ConstraintDescription: must be between 5 and 1024Gb.
+
+
+Resources:
+  DBSubnetGroup:
+    Type: AWS::RDS::DBSubnetGroup
+    Properties:
+      DBSubnetGroupDescription: RDS MYSQL Subnet Group
+      DBSubnetGroupName: !Sub ${AWS::StackName}-DBSubnetGroup
+      SubnetIds:
+      - Fn::ImportValue: !Sub "${NetworkStackName}-PrivateSubnet-A"
+      - Fn::ImportValue: !Sub ${NetworkStackName}-PrivateSubnet-B
+      - Fn::ImportValue: !Sub ${NetworkStackName}-PrivateSubnet-C
+
+  # This security group allows the traffic from it to anywhere
+  # Application shall be created inside this security group
+  DBEC2SecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      VpcId:
+        Fn::ImportValue: !Sub ${NetworkStackName}-VPCId
+      GroupDescription: Open database for access
+      SecurityGroupIngress:
+      - IpProtocol: tcp
+        FromPort: 3306
+        ToPort: 3306
+        SourceSecurityGroupId: !Ref WebSecurityGroup
+
+  WebSecurityGroup:
+    Type: 'AWS::EC2::SecurityGroup'
+    Properties:
+      VpcId:
+        Fn::ImportValue: !Sub ${NetworkStackName}-VPCId
+      GroupDescription: SG to allow connection to the EC2
+      SecurityGroupIngress:
+        - IpProtocol: tcp
+          FromPort: '22'
+          ToPort: '22'
+          CidrIp: '0.0.0.0/0'
+        - IpProtocol: tcp
+          FromPort: 80
+          ToPort: 80
+          CidrIp: 0.0.0.0/0
+        - IpProtocol: tcp
+          FromPort: 443
+          ToPort: 443
+          CidrIp: 0.0.0.0/0
+      Tags:
+        - Key: Name
+          Value: Web-SG
+
+  DBInstance:
+    Type: "AWS::RDS::DBInstance"
+    Properties:
+      DBName: collector
+      Engine: MYSQL
+      EngineVersion: 8.0.33
+      AllocatedStorage: !Ref DBAllocatedStorage
+      StorageType: gp2
+      DBInstanceClass : !Ref DBInstanceClass
+
+      DBSubnetGroupName: !Ref DBSubnetGroup
+      VPCSecurityGroups:
+      - !GetAtt DBEC2SecurityGroup.GroupId
+
+      MultiAZ: true
+      PubliclyAccessible: false
+
+      MasterUsername: !Ref "DBUsername"
+      MasterUserPassword: !Ref "DBPassword"
+
+    DeletionPolicy: Snapshot
+    UpdateReplacePolicy: Snapshot
+
+Outputs:
+  DatabaseEndpoint:
+    Description: "Connection endpoint for the database"
+    Value: !GetAtt DBInstance.Endpoint.Address
+  WebSecurityGroupId:
+    Description: "Application server would be making connection to this security group"
+    Value: !Ref WebSecurityGroup
+    Export:
+      Name: !Sub "${AWS::StackName}-WebSecurityGroupId"

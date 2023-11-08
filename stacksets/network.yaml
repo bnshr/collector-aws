@@ -1,3 +1,8 @@
+Parameters:
+  StackName:
+    Type: "String"
+    Default: network
+
 Resources:
   VPC:
     Type: "AWS::EC2::VPC"
@@ -44,7 +49,7 @@ Resources:
         - 0
         - !GetAZs
           Ref: 'AWS::Region'
-      CidrBlock: 10.0.3.0/24
+      CidrBlock: 10.0.2.0/24
       MapPublicIpOnLaunch: false
       Tags:
       - Key: Name
@@ -58,11 +63,25 @@ Resources:
         - 1
         - !GetAZs
           Ref: 'AWS::Region'
-      CidrBlock: 10.0.4.0/24
+      CidrBlock: 10.0.3.0/24
       MapPublicIpOnLaunch: false
       Tags:
       - Key: Name
         Value: !Sub ${AWS::StackName}-Private-B
+
+  PrivateSubnetC:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref VPC
+      AvailabilityZone: !Select
+        - 2
+        - !GetAZs
+          Ref: 'AWS::Region'
+      CidrBlock: 10.0.4.0/24
+      MapPublicIpOnLaunch: false
+      Tags:
+      - Key: Name
+        Value: !Sub ${AWS::StackName}-Private-C
 
   ## INTERNET GATEWAY
   InternetGateway:
@@ -126,30 +145,57 @@ Resources:
       SubnetId: !Ref PrivateSubnetB
       RouteTableId: !Ref PrivateRouteTable
 
+  PrivateSubnet3RouteTableAssociation:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      SubnetId: !Ref PrivateSubnetC
+      RouteTableId: !Ref PrivateRouteTable
+
 Outputs:
-  VPC:
-    Description: "A reference to the created VPC"
-    Value: !Ref VPC
-    Export:
-      Name: !Sub ${AWS::StackName}-VPC
   VpcId:
     Description: The VPC ID
     Value: !Ref VPC
+    Export:
+      Name: !Sub "${AWS::StackName}-VPCId"
+
   PublicSubnets:
-    Description: "A list of public subnets"
+    Description: A list of public subnets
     Value: !Join [",", [ !Ref PublicSubnetA, !Ref PublicSubnetB ]]
+    Export:
+      Name: !Sub "${AWS::StackName}-PublicSubnets"
+
   PrivateSubnets:
-    Description: "A list of private subnets"
-    Value: !Join [",", [ !Ref PrivateSubnetA, !Ref PrivateSubnetB ]]
+    Description: A list of private subnets
+    Value: !Join [",", [ !Ref PrivateSubnetA, !Ref PrivateSubnetB, !Ref PrivateSubnetC ]]
+    Export:
+      Name: !Sub "${AWS::StackName}-PrivateSubnets"
+
   PublicSubnetA:
-    Description: "A reference to public subnet in the 1st availability zone"
+    Description: A reference to public subnet in the 1st availability zone
     Value: !Ref PublicSubnetA
+    Export:
+      Name: !Sub "${AWS::StackName}-PublicSubnet-A"
+
   PublicSubnetB:
-    Description: "A reference to public subnet in the 2nd availability zone"
+    Description: A reference to public subnet in the 2nd availability zone
     Value: !Ref PublicSubnetB
+    Export:
+      Name: !Sub "${AWS::StackName}-PublicSubnet-B"
+
   PrivateSubnetA:
-    Description: "A reference to private subnet in the 1st availability zone"
+    Description: A reference to private subnet in the 1st availability zone
     Value: !Ref PrivateSubnetA
+    Export:
+      Name: !Sub "${AWS::StackName}-PrivateSubnet-A"
+
   PrivateSubnetB:
-    Description: "A reference to private subnet in the 2nd availability zone"
+    Description: A reference to private subnet in the 2nd availability zone
     Value: !Ref PrivateSubnetB
+    Export:
+      Name: !Sub "${AWS::StackName}-PrivateSubnet-B"
+
+  PrivateSubnetC:
+    Description: A reference to private subnet in the 2nd availability zone
+    Value: !Ref PrivateSubnetC
+    Export:
+      Name: !Sub "${AWS::StackName}-PrivateSubnet-C"
