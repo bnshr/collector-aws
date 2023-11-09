@@ -1,4 +1,6 @@
 # Refer network stack to get private subnets and vpc name where the RDS instance would be created
+AWSTemplateFormatVersion: 2010-09-09
+
 Parameters:
   NetworkStackName:
     Type: "String"
