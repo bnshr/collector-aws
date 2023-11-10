@@ -1,10 +1,5 @@
 AWSTemplateFormatVersion: 2010-09-09
 
-Parameters:
-  StackName:
-    Type: "String"
-    Default: network
-
 Resources:
   VPC:
     Type: "AWS::EC2::VPC"
@@ -14,7 +9,11 @@ Resources:
       EnableDnsHostnames: true
       Tags:
       - Key: "Name"
-        Value:  !Join ['', [!Ref "AWS::StackName", "-VPC" ]]
+        Value:  !Join ['', [!Ref "AWS::StackName", "-collector" ]]
+      - Key: Owner
+        Value: cnf
+      - Key: Environment
+        Value: production
 
   ## SUBNETS
   PublicSubnetA:

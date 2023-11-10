@@ -99,6 +99,14 @@ Resources:
       MasterUsername: !Ref "DBUsername"
       MasterUserPassword: !Ref "DBPassword"
 
+      Tags:
+      - Key: "Name"
+        Value:  !Join ['', [!Ref "AWS::StackName", "-collector" ]]
+      - Key: Owner
+        Value: cnf
+      - Key: Environment
+        Value: production
+
     DeletionPolicy: Snapshot
     UpdateReplacePolicy: Snapshot
 
@@ -107,7 +115,7 @@ Outputs:
     Description: "Connection endpoint for the database"
     Value: !GetAtt DBInstance.Endpoint.Address
   WebSecurityGroupId:
-    Description: "Application server would be making connection to this security group"
-    Value: !Ref WebSecurityGroup
+    Description: "Security group ID to use for web servers to make DB connection"
+    Value: !GetAtt WebSecurityGroup.GroupId
     Export:
       Name: !Sub "${AWS::StackName}-WebSecurityGroupId"
