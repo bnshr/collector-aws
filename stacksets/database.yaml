@@ -21,7 +21,7 @@ Parameters:
     Default: admin
   DBPassword:
     Type: "String"
-    Default: adm1n12345678
+    Default: collector1
   DBAllocatedStorage:
     Default: '5'
     Description: The size of the database (Gb)
@@ -64,10 +64,6 @@ Resources:
       GroupDescription: SG to allow connection to the EC2
       SecurityGroupIngress:
         - IpProtocol: tcp
-          FromPort: '22'
-          ToPort: '22'
-          CidrIp: '0.0.0.0/0'
-        - IpProtocol: tcp
           FromPort: 80
           ToPort: 80
           CidrIp: 0.0.0.0/0
@@ -79,7 +75,7 @@ Resources:
         - Key: Name
           Value: Web-SG
 
-  DBInstance:
+  CollectorDB:
     Type: "AWS::RDS::DBInstance"
     Properties:
       DBName: collector
@@ -99,6 +95,8 @@ Resources:
       MasterUsername: !Ref "DBUsername"
       MasterUserPassword: !Ref "DBPassword"
 
+      DeletionProtection: true
+
       Tags:
       - Key: "Name"
         Value:  !Join ['', [!Ref "AWS::StackName", "-collector" ]]
@@ -113,7 +111,7 @@ Resources:
 Outputs:
   DatabaseEndpoint:
     Description: "Connection endpoint for the database"
-    Value: !GetAtt DBInstance.Endpoint.Address
+    Value: !GetAtt CollectorDB.Endpoint.Address
   WebSecurityGroupId:
     Description: "Security group ID to use for web servers to make DB connection"
     Value: !GetAtt WebSecurityGroup.GroupId

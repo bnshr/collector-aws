@@ -73,4 +73,9 @@ Resources:
       Properties:
         InstanceId: !Ref WebEC2Instance
 
-# Output shall be DNS name of the EC2
+Outputs:
+  WebEIP:
+    Description: "Elastic IP address of the web instance"
+    Value: !Ref WebEIP
+    Export:
+      Name: WebElasticIPAddress
